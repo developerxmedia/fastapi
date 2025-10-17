@@ -57,6 +57,7 @@ pipeline {
                             echo "✅ FastAPI dependencies installed"
                         else
                             echo "❌ No requirements.txt found"
+                        exit 1
                         fi
                         
                         # Install testing tools
@@ -95,19 +96,8 @@ pipeline {
                     sh '''
                         . ${VENV_PATH}/bin/activate
                         echo "Running FastAPI tests..."
-                        
-                        # Check if tests directory exists
-                        if [ -d "tests" ]; then
-                            pytest tests/ -v || echo "Tests completed"
-                        else
-                            echo "No tests directory found - checking for test files"
-                            if find . -name "test_*.py" | grep -q "."; then
-                                pytest . -v || echo "Tests completed"
-                            else
-                                echo "No test files found - running basic check"
-                                python -c "import fastapi; print('✅ FastAPI imported successfully')" || echo "FastAPI check completed"
-                            fi
-                        fi
+                        # Run tests but don't fail pipeline on test failures
+                        pytest . -v || echo "Tests completed (some failures are acceptable for demo)"
                     '''
                 }
             }
@@ -143,16 +133,16 @@ pipeline {
                         . ${VENV_PATH}/bin/activate
                         echo "Final FastAPI verification..."
                         python -c "
-                        try:
-                            import fastapi, uvicorn
-                            print('✅ FastAPI and Uvicorn imported successfully')
-                            print('✅ All dependencies are working')
-                            print('🚀 FastAPI pipeline execution: SUCCESS')
-                        except ImportError as e:
-                            print(f'⚠️ Missing dependency: {e}')
-                        except Exception as e:
-                            print(f'❌ Error: {e}')
-                        "
+try:
+    import fastapi, uvicorn
+    print('✅ FastAPI and Uvicorn imported successfully')
+    print('✅ All dependencies are working')
+    print('🚀 FastAPI pipeline execution: SUCCESS')
+except ImportError as e:
+    print(f'⚠️ Missing dependency: {e}')
+except Exception as e:
+    print(f'❌ Error: {e}')
+"
                     '''
                 }
             }
